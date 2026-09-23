@@ -1,0 +1,34 @@
+"""Cross-process advisory file locks (``flock``), usable from asyncio without blocking the loop."""
+
+import asyncio
+import fcntl
+import os
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+POLL_INTERVAL_SECONDS = 0.05
+
+
+@asynccontextmanager
+async def file_lock(path: Path) -> AsyncGenerator[None]:
+    """Hold an exclusive ``flock`` on ``path`` for the duration of the block.
+
+    Acquisition polls with ``LOCK_NB`` rather than blocking a thread, so waiting is
+    cancellable and never leaves a thread holding a lock nobody will release.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                await asyncio.sleep(POLL_INTERVAL_SECONDS)
+        try:
+            yield
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)

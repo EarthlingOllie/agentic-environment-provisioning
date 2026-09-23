@@ -1,0 +1,67 @@
+"""Shared fixtures: the primary test seam is the CLI invoked in-process.
+
+Every host-state location sandbox uses is redirected into ``tmp_path`` through a config
+file named by ``SANDBOX_CONFIG``, so tests never touch the real home directory.
+"""
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
+from typer.testing import CliRunner, Result
+
+from sandbox.cli import Deps, app
+from sandbox.git import Git
+
+
+@dataclass
+class Env:
+    root: Path
+    cwd: Path
+    config_file: Path
+    sets_root: Path
+    templates_root: Path
+    state_dir: Path
+
+    def set_dir(self, name: str) -> Path:
+        return self.sets_root / name
+
+    def make_repo_dir(self, name: str, *, opt_in: bool = True) -> Path:
+        path = self.cwd / name
+        path.mkdir(parents=True)
+        if opt_in:
+            (path / ".sandbox").mkdir()
+        return path
+
+
+@pytest.fixture
+def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Env:
+    root = tmp_path.resolve()  # macOS: /var is a symlink to /private/var
+    home = root / "home"
+    home.mkdir()
+    cwd = root / "code"
+    cwd.mkdir()
+    environment = Env(
+        root=root,
+        cwd=cwd,
+        config_file=root / "config.yaml",
+        sets_root=root / "sets",
+        templates_root=root / "plans",
+        state_dir=root / "state",
+    )
+    environment.config_file.write_text(
+        f"sets_root: {environment.sets_root}\n"
+        f"templates_root: {environment.templates_root}\n"
+        f"state_dir: {environment.state_dir}\n"
+    )
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.delenv("XDG_STATE_HOME", raising=False)
+    monkeypatch.setenv("SANDBOX_CONFIG", str(environment.config_file))
+    monkeypatch.chdir(cwd)
+    return environment
+
+
+def invoke(args: Sequence[str], git: Git) -> Result:
+    return CliRunner().invoke(app, list(args), obj=Deps(git=git))
