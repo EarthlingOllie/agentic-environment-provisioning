@@ -9,5 +9,5 @@
 - [ ] An `agent` Compose fragment is accepted in config, templates and set plans, with the set plan winning, then template, then config; it is pinned into the set plan like `source`
 - [ ] After merging, sandbox re-applies mounts, user, CA mount, `CLAUDE_CONFIG_DIR`, capability drops and the no-Docker-socket rule; an override that tries to mount the socket or run as root is overridden (verified by inspecting the rendered override)
 - [ ] Extra services in the fragment (e.g. a proxy) join the set network
-- [ ] `up` checks a custom image has `sh`, `git` and `claude` on PATH and fails before any other container starts if not
+- [ ] `up` checks a custom image has `sh`, `git` and `claude` on PATH (by running the image with the `docker` CLI, no SDK) and fails before any other container starts if not
 - [ ] Docs state egress is unrestricted in the MVP and show a proxy override example

@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] State is derived by reconciling set directories and the lease file against Docker labels: running, stopped, partial, orphaned (leftover containers/leases with no set directory, or vice versa)
+- [ ] State is derived by reconciling set directories and the lease file against Docker labels (queried with the `docker` CLI, no SDK): running, stopped, partial, orphaned (leftover containers/leases with no set directory, or vice versa)
 - [ ] `sandbox status` lists all sets with state
 - [ ] `sandbox SET status` shows services with health, hostnames and IPs, and repos with branch and a dirty/untracked marker
 - [ ] Output models are Pydantic models shared by the table renderer and `--json`

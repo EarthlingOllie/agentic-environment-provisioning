@@ -15,4 +15,5 @@
 - [ ] Each worktree lives in the set directory on `agent/<set>` cut from `base`; `git worktree add` is serialised per source repo so concurrent `up` processes on the same repo don't corrupt `.git`
 - [ ] A later `up` for the same set name reuses a surviving `agent/<set>` branch and warns that `base` was ignored
 - [ ] `up` never overwrites an existing plan, and refuses when the requested repos differ from the plan on disk
+- [ ] Project convention recorded (e.g. in the README or contributor notes): all Docker interaction goes through the `docker` / `docker compose` CLIs via subprocess; the Python Docker SDK is not a dependency
 - [ ] Test seam: the CLI invoked in-process with a config pointing every host-state location at a temp dir; fakes for git available for unit runs, real git in integration runs
