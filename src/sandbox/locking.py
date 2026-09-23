@@ -1,7 +1,6 @@
 """Cross-process advisory file locks (``flock``), usable from asyncio without blocking the loop."""
 
 import asyncio
-import fcntl
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -17,6 +16,10 @@ async def file_lock(path: Path) -> AsyncGenerator[None]:
     Acquisition polls with ``LOCK_NB`` rather than blocking a thread, so waiting is
     cancellable and never leaves a thread holding a lock nobody will release.
     """
+    # Imported here, not at module level: fcntl does not exist on Windows, and importing
+    # the CLI there must reach the "unsupported platform" check instead of an ImportError.
+    import fcntl
+
     path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o644)
     try:

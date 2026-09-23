@@ -1,5 +1,6 @@
 """CLI shape: `sandbox [SET] <verb>`, reserved verbs, and the platform gate."""
 
+import subprocess
 import sys
 
 import pytest
@@ -55,3 +56,10 @@ def test_windows_is_unsupported(env: Env, monkeypatch: pytest.MonkeyPatch, platf
     assert result.exit_code != 0
     assert "unsupported platform" in result.stderr
     assert not env.sets_root.exists()
+
+
+def test_cli_imports_without_fcntl() -> None:
+    """On Windows fcntl is missing; the CLI must still import and reach the platform check."""
+    code = "import sys; sys.modules['fcntl'] = None; import sandbox.cli"
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
